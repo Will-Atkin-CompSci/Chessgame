@@ -1,3 +1,4 @@
+//imports
 import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
@@ -6,6 +7,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import javax.swing.*;
 
+//Class Declaration
 public class ChessGame implements ActionListener {
     private JFrame frame;
     private JButton[][] chessBoard;
@@ -106,8 +108,137 @@ public class ChessGame implements ActionListener {
     }
 
 private boolean isValidMove(int startX, int startY, int endX, int endY) {
-// implement move validation logic 
-return true;
+  // check if the destination is out of bounds
+  if (endX < 0 || endX > 7 || endY < 0 || endY > 7) {
+      return false;
+  }
+
+  int pieceType = board[startX][startY];
+
+  // check if the piece is a pawn
+  if (pieceType == 1) {
+      // check if the pawn is moving forward
+      if (startY == endY) {
+          int direction = (pieceType > 0) ? -1 : 1;
+          int diff = Math.abs(endX - startX);
+          if (diff == 1 && board[endX][endY] * pieceType < 0) {
+              return true;
+          } else if (diff == 2 && startX == (pieceType > 0 ? 6 : 1) && board[startX + direction][startY] == 0 && board[endX][endY] == 0) {
+              return true;
+          } else if (diff != 1) {
+              return false;
+          }
+          return board[endX][endY] == 0;
+      } else { // check if the pawn is capturing a piece diagonally
+          int direction = (pieceType > 0) ? -1 : 1;
+          int diffX = Math.abs(endX - startX);
+          int diffY = Math.abs(endY - startY);
+          if (diffX == 1 && diffY == 1 && board[endX][endY] * pieceType < 0) {
+              return true;
+          } else {
+              return false;
+          }
+      }
+  }
+
+  // check if the piece is a knight
+  if (pieceType == 3) {
+      int diffX = Math.abs(endX - startX);
+      int diffY = Math.abs(endY - startY);
+      if ((diffX == 2 && diffY == 1) || (diffX == 1 && diffY == 2)) {
+          return board[endX][endY] * pieceType <= 0;
+      } else {
+          return false;
+      }
+  }
+
+  // check if the piece is a bishop
+  if (pieceType == 2) {
+      int diffX = Math.abs(endX - startX);
+      int diffY = Math.abs(endY - startY);
+      if (diffX != diffY) {
+          return false;
+      }
+      int xDir = (endX > startX) ? 1 : -1;
+      int yDir = (endY > startY) ? 1 : -1;
+      for (int i = startX + xDir, j = startY + yDir; i != endX; i += xDir, j += yDir) {
+          if (board[i][j] != 0) {
+              return false;
+          }
+      }
+      return board[endX][endY] * pieceType <= 0;
+  }
+
+  // check if the piece is a rook
+  if (pieceType == 4) {
+    int diffX = Math.abs(endX - startX);
+    int diffY = Math.abs(endY - startY);
+    if (diffX != 0 && diffY != 0) {
+        return false;
+    }
+    if (diffX > 0) {
+        int xDir = (endX > startX) ? 1 : -1;
+        for (int i = startX + xDir; i != endX; i += xDir) {
+            if (board[i][startY] != 0) {
+                return false;
+            }
+        }
+    } else {
+        int yDir = (endY > startY) ? 1 : -1;
+        for (int j = startY + yDir; j != endY; j += yDir) {
+            if (board[startX][j] != 0) {
+                return false;
+            }
+        }
+    }
+    return board[endX][endY] * pieceType <= 0;
+}
+
+// check if the piece is a queen
+if (pieceType == 5) {
+    int diffX = Math.abs(endX - startX);
+    int diffY = Math.abs(endY - startY);
+    if (diffX != diffY && diffX != 0 && diffY != 0) {
+        return false;
+    }
+    if (diffX == diffY) {
+        int xDir = (endX > startX) ? 1 : -1;
+        int yDir = (endY > startY) ? 1 : -1;
+        for (int i = startX + xDir, j = startY + yDir; i != endX; i += xDir, j += yDir) {
+            if (board[i][j] != 0) {
+                return false;
+            }
+        }
+    } else if (diffX == 0) {
+        int yDir = (endY > startY) ? 1 : -1;
+        for (int j = startY + yDir; j != endY; j += yDir) {
+            if (board[startX][j] != 0) {
+                return false;
+            }
+        }
+    } else {
+        int xDir = (endX > startX) ? 1 : -1;
+        for (int i = startX + xDir; i != endX; i += xDir) {
+            if (board[i][startY] != 0) {
+                return false;
+            }
+        }
+    }
+    return board[endX][endY] * pieceType <= 0;
+}
+
+// check if the piece is a king
+if (pieceType == 6) {
+    int diffX = Math.abs(endX - startX);
+    int diffY = Math.abs(endY - startY);
+    if (diffX <= 1 && diffY <= 1) {
+        return board[endX][endY] * pieceType <= 0;
+    } else {
+        return false;
+    }
+}
+
+return false;
 }
 
 private void setPieceIcon(JButton btn, String pieceName) {
@@ -117,9 +248,11 @@ if (pieceName == null) {
     return;
 }
 
-String filename = "/images/" + pieceName + ".png";
+String home = System.getProperty("user.home");
+String filename = home + "\\Downloads\\" + pieceName + ".png";
 BufferedImage image = ImageIO.read(new File(filename));
-btn.setIcon(new ImageIcon(image));
+Image scaledImage = image.getScaledInstance(95, 95, Image.SCALE_SMOOTH);
+btn.setIcon(new ImageIcon(scaledImage));
 } catch (IOException ex) {
 System.err.println("Failed to load piece image: " + ex.getMessage());
 }
