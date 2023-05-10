@@ -1,147 +1,150 @@
 import java.awt.*;
+import java.awt.event.*;
+import java.io.IOException;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import javax.swing.*;
 
-public class ChessGame {
-    
+public class ChessGame implements ActionListener {
     private JFrame frame;
-    private JPanel chessBoard;
-    private JLabel[][] chessSquares = new JLabel[8][8];
-    private ImageIcon[] pieceImageIcons = new ImageIcon[12];
-    private int[][] chessBoardArray = {
-        {2, 3, 4, 5, 6, 4, 3, 2},
-        {1, 1, 1, 1, 1, 1, 1, 1},
-        {0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0},
-        {-1, -1, -1, -1, -1, -1, -1, -1},
-        {-2, -3, -4, -5, -6, -4, -3, -2}
-    };
-    private int currentPlayer = 1; // 1 for white, -1 for black
-    
+    private JButton[][] chessBoard;
+    private int[][] board;
+    private int selectedX, selectedY;
+
     public ChessGame() {
-        frame = new JFrame("Chess Game");
-        chessBoard = new JPanel(new GridLayout(8, 8));
-        
-        // load piece images
-        pieceImageIcons[0] = new ImageIcon("images/w_pawn.png");
-        pieceImageIcons[1] = new ImageIcon("images/w_rook.png");
-        pieceImageIcons[2] = new ImageIcon("images/w_knight.png");
-        pieceImageIcons[3] = new ImageIcon("images/w_bishop.png");
-        pieceImageIcons[4] = new ImageIcon("images/w_queen.png");
-        pieceImageIcons[5] = new ImageIcon("images/w_king.png");
-        pieceImageIcons[6] = new ImageIcon("images/b_pawn.png");
-        pieceImageIcons[7] = new ImageIcon("images/b_rook.png");
-        pieceImageIcons[8] = new ImageIcon("images/b_knight.png");
-        pieceImageIcons[9] = new ImageIcon("images/b_bishop.png");
-        pieceImageIcons[10] = new ImageIcon("images/b_queen.png");
-        pieceImageIcons[11] = new ImageIcon("images/b_king.png");
-        
-        // create chess board
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
-                JLabel square = new JLabel();
-                chessSquares[row][col] = square;
-                chessBoard.add(square);
-                
-                // set background color
-                if ((row + col) % 2 == 0) {
-                    square.setBackground(Color.WHITE);
+        frame = new JFrame("Chess");
+        frame.setSize(800, 800);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        JPanel panel = new JPanel(new GridLayout(8, 8));
+        frame.add(panel);
+
+        chessBoard = new JButton[8][8];
+        board = new int[8][8];
+
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                chessBoard[i][j] = new JButton();
+                chessBoard[i][j].addActionListener(this);
+                panel.add(chessBoard[i][j]);
+
+                if ((i + j) % 2 == 0) {
+                    chessBoard[i][j].setBackground(Color.WHITE);
                 } else {
-                    square.setBackground(Color.GRAY);
+                    chessBoard[i][j].setBackground(Color.GRAY);
                 }
-                
-                // set piece image
-                int piece = chessBoardArray[row][col];
-                if (piece != 0) {
-                    square.setIcon(pieceImageIcons[getPieceIndex(piece)]);
+
+                if (i == 0 || i == 7) {
+                    if (j == 0 || j == 7) {
+                        board[i][j] = 4;
+                        setPieceIcon(chessBoard[i][j], "rook");
+                    } else if (j == 1 || j == 6) {
+                        board[i][j] = 3;
+                        setPieceIcon(chessBoard[i][j], "knight");
+                    } else if (j == 2 || j == 5) {
+                        board[i][j] = 2;
+                        setPieceIcon(chessBoard[i][j], "bishop");
+                    } else if (j == 3) {
+                        board[i][j] = 5;
+                        setPieceIcon(chessBoard[i][j], "queen");
+                    } else {
+                        board[i][j] = 6;
+                        setPieceIcon(chessBoard[i][j], "king");
+                    }
+                } else if (i == 1 || i == 6) {
+                    board[i][j] = 1;
+                    setPieceIcon(chessBoard[i][j], "pawn");
                 }
-                
-                // add click listener
-                square.addMouseListener(new ChessSquareClickListener(row, col));
             }
         }
-        
-        // add chess board to frame
-        frame.add(chessBoard);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.pack();
+
         frame.setVisible(true);
     }
-    
-    private int getPieceIndex(int piece) {
-        // returns the index of the piece image icon in the pieceImageIcons array
-        switch (piece) {
-            case 1:
-                return 0; // white pawn
-            case 2:
-                return 1; // white rook
-            case 3:
-                return 2; // white knight
-            case 4:
-                return 3; // white bishop
-            case 5:
-                return 4; // white queen
-            case 6:
-                return 5; // white king
-            case -1:
-                return 6; // black pawn
-            case -2:
-                return 7; // black rook
-            case -3:
-                return 8; // black knight
-            case -4:
-                return 9; // black bishop
-            case -5:
-                return 10; // black queen
-            case -6:
-                return 11; // black king
-            default:
-                return -1;
+
+    public void actionPerformed(ActionEvent e) {
+        JButton btn = (JButton) e.getSource();
+
+        int x = -1, y = -1;
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                if (btn == chessBoard[i][j]) {
+                    x = i;
+                    y = j;
+                    break;
+                }
+            }
+        }
+
+        if (x == -1 || y == -1) {
+            return;
+        }
+
+        if (selectedX == -1 && selectedY == -1) {
+            if (board[x][y] == 0) {
+                return;
+            }
+
+            selectedX = x;
+            selectedY = y;
+            btn.setBackground(Color.YELLOW);
+        } else {
+            if (x == selectedX && y == selectedY) {
+                btn.setBackground((x + y) % 2 == 0 ? Color.WHITE : Color.GRAY);
+                
+            } else if (isValidMove(selectedX, selectedY, x, y)) {
+                board[x][y] = board[selectedX][selectedY];
+                board[selectedX][selectedY] = 0;
+                setPieceIcon(chessBoard[x][y], getPieceName(board[x][y]));
+                setPieceIcon(chessBoard[selectedX][selectedY], null);
+
+                btn.setBackground((x + y) % 2 == 0 ? Color.WHITE : Color.GRAY);
+                selectedX = -1;
+                selectedY = -1;
+            }
         }
     }
-    
-    private void movePiece(int fromRow, int fromCol, int toRow, int toCol) {
-        // move piece from (fromRow, fromCol) to (toRow, toCol)
-        int piece = chessBoardArray[fromRow][fromCol];
-        chessBoardArray[fromRow][fromCol] = 0;
-        chessBoardArray[toRow][toCol] = piece;
-        chessSquares[fromRow][fromCol].setIcon(null);
-        chessSquares[toRow][toCol].setIcon(pieceImageIcons[getPieceIndex(piece)]);
-    }
-    
-    private boolean isValidMove(int fromRow, int fromCol, int toRow, int toCol) {
-        // check if move from (fromRow, fromCol) to (toRow, toCol) is valid
-        int piece = chessBoardArray[fromRow][fromCol];
-        if (piece == 0) {
-            return false;
-        }
-        if (chessBoardArray[toRow][toCol] * piece > 0) {
-            return false; // can't take own piece
-        }
-        switch (Math.abs(piece)) {
-            case 1: // pawn
-                int direction = piece > 0 ? -1 : 1;
-                if (fromCol == toCol) { // moving straight
-                    if (chessBoardArray[toRow][toCol] != 0) {
-                        return false; // can't move forward if square occupied
-                    }
-                    if (fromRow + direction == toRow) {
-                        return true; // can move one square forward
-                    }
-                    if (fromRow + 2 * direction == toRow && fromRow == (piece > 0 ? 6 : 1) && chessBoardArray[fromRow + direction][toCol] == 0) {
-                        return true; // can move two squares forward if on starting rank and square in between is empty
-                    }
-                } else if (Math.abs(toCol - fromCol) == 1 && fromRow + direction == toRow && chessBoardArray[toRow][toCol] * piece < 0) {
-                    return true; // can take diagonally
-                }
-                return false;
-            case 2: // rook
-                if (fromRow != toRow && fromCol != toCol) {
-                    return false; // can only move horizontally or vertically
-                }
-                if (fromRow == toRow) { // moving horizontally
-                    int startCol = Math.min(fromCol, toCol);
-                    int endCol = Math.max(fromCol, toCol);
-                    for (int col =
-    
+
+private boolean isValidMove(int startX, int startY, int endX, int endY) {
+// implement move validation logic 
+return true;
+}
+
+private void setPieceIcon(JButton btn, String pieceName) {
+try {
+if (pieceName == null) {
+    btn.setIcon(null);
+    return;
+}
+
+String filename = "/images/" + pieceName + ".png";
+BufferedImage image = ImageIO.read(new File(filename));
+btn.setIcon(new ImageIcon(image));
+} catch (IOException ex) {
+System.err.println("Failed to load piece image: " + ex.getMessage());
+}
+}
+
+private String getPieceName(int pieceType) {
+switch (pieceType) {
+case 1:
+    return "pawn";
+case 2:
+    return "bishop";
+case 3:
+    return "knight";
+case 4:
+    return "rook";
+case 5:
+    return "queen";
+case 6:
+    return "king";
+default:
+    return null;
+}
+}
+
+public static void main(String[] args) {
+new ChessGame();
+}
+}
