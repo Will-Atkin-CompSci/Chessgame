@@ -1,7 +1,5 @@
 package Peices;
 
-/*import javax.imageio.ImageIO;
-import java.io.IOException;*/
 import java.awt.image.BufferedImage;
 
 import Main.Board;

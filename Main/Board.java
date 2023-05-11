@@ -1,6 +1,5 @@
 package Main;
 
-
 import java.awt.*;
 import javax.swing.*;
 
@@ -14,25 +13,22 @@ import Peices.Rook;
 
 import java.util.ArrayList;
 
+//sets the JPanel to include the chessboard
 public class Board extends JPanel{
-  
-  public int tileSize = 85;
 
+  public int tileSize = 85;
   int cols = 8;
   int rows = 8;
-
   ArrayList<Peice> peiceList = new ArrayList<>();
-
+  private boolean isWhiteTurn = true;  // White starts the game
   public Peice selecetedPiece;
-
   Input input = new Input(this);
-
- public CheckScanner checkScanner = new CheckScanner(this);
-
+  public CheckScanner checkScanner = new CheckScanner(this);
   public int enPasseantTile = -1;
 
   // make the board
   public Board() {
+
     this.setPreferredSize(new Dimension(cols * tileSize, rows * tileSize));
 
     this.addMouseListener(input);
@@ -68,6 +64,8 @@ public class Board extends JPanel{
     move.piece.IsFirstMove = false;
 
     capture(move.capture);
+
+    isWhiteTurn = !isWhiteTurn;
     }
 
   // move king method
@@ -120,9 +118,13 @@ public class Board extends JPanel{
     peiceList.remove(peice);
   }
 
-
   // valid move checker
   public boolean isValidMove(Move move) {
+
+    if (move.piece.isWhite != isWhiteTurn) {
+      // Not the current player's turn, return or display an error message
+      return false;
+  }
 
     if (sameTeam(move.piece, move.capture)) {
       return false;
@@ -141,7 +143,6 @@ public class Board extends JPanel{
 
     return true;
   }
-
 
   // same team checker
   public boolean sameTeam(Peice p1, Peice p2) {
@@ -208,7 +209,6 @@ public class Board extends JPanel{
     peiceList.add(new Pawn( this, 7, 6, true));
   }
 
-
   // paint components
   public void paintComponent(Graphics g) {
     Graphics2D g2d = (Graphics2D) g;
@@ -220,7 +220,7 @@ public class Board extends JPanel{
         g2d.fillRect(c * tileSize, r * tileSize, tileSize, tileSize);
       }
     }
-
+    
  // paint valid moves
     if (selecetedPiece != null) {
     for (int r = 0; r < rows; r++) {
