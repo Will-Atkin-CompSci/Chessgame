@@ -27,6 +27,8 @@ public class Board extends JPanel{
 
   Input input = new Input(this);
 
+ public CheckScanner checkScanner = new CheckScanner(this);
+
   public int enPasseantTile = -1;
 
   // make the board
@@ -55,7 +57,9 @@ public class Board extends JPanel{
 
     if(move.piece.name.equals("Pawn")) {
       movePawn(move);
-    } else {
+    } else if (move.piece.name.equals("King")) {
+      moveKing((move));
+    }
     move.piece.col = move.newCol;
     move.piece.row = move.newRow;
     move.piece.xPos = move.newCol * tileSize;
@@ -64,6 +68,21 @@ public class Board extends JPanel{
     move.piece.IsFirstMove = false;
 
     capture(move.capture);
+    }
+
+  // move king method
+  private void moveKing(Move move) {
+
+    if (Math.abs(move.piece.col - move.newCol) == 2) {
+      Peice rook;
+      if (move.piece.col < move.newCol) {
+        rook = getPeice(7, move.piece.row);
+        rook.col = 5;
+      } else {
+        rook = getPeice(0, move.piece.row);
+        rook.col = 3;
+      }
+      rook.xPos = rook.col * tileSize;
     }
   }
 
@@ -88,15 +107,6 @@ public class Board extends JPanel{
     if (move.newRow == colorIndex) {
       promotePawn(move);
     }
-
-    move.piece.col = move.newCol;
-    move.piece.row = move.newRow;
-    move.piece.xPos = move.newCol * tileSize;
-    move.piece.yPos = move.newRow * tileSize;
-
-    move.piece.IsFirstMove = false;
-
-    capture(move.capture);
   }
 
   // promote pawn method
@@ -125,6 +135,10 @@ public class Board extends JPanel{
       return false;
     }
 
+    if (checkScanner.isKingChecked(move)) {
+      return false;
+    }
+
     return true;
   }
 
@@ -140,6 +154,15 @@ public class Board extends JPanel{
   // getting tile number
   public int getTileNum(int col, int row) {
     return row * rows + col;
+  }
+
+  Peice findKing(boolean isWhite) {
+    for (Peice peice : peiceList) {
+      if (isWhite == peice.isWhite && peice.name.equals("King")) {
+        return peice;
+      }
+    }
+    return null;
   }
 
   // add the peices to the arraylist
@@ -169,8 +192,8 @@ public class Board extends JPanel{
     peiceList.add(new Rook( this, 0, 7, true));
     peiceList.add(new Knight(this, 1, 7, true));
     peiceList.add(new Bishop(this, 2, 7, true));
-    peiceList.add(new King(this, 3, 7, true));
-    peiceList.add(new Queen(this, 4, 7, true));
+    peiceList.add(new Queen(this, 3, 7, true));
+    peiceList.add(new King(this, 4, 7, true));
     peiceList.add(new Bishop(this, 5, 7, true));
     peiceList.add(new Knight(this, 6, 7, true));
     peiceList.add(new Rook(this, 7, 7, true));
